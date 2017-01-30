@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "deploy": "node app",
+    "deploy-pro": "grunt && node app",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,5 +21,9 @@
   "dependencies": {
     "connect": "^3.5.0",
     "serve-static": "^1.11.2"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1"
   }
 }

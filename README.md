@@ -127,7 +127,7 @@ app.controller("appController", function appController($scope){
 ###### /public/index.html:
 ```
 <body ng-app="app">
-    <div  ng-controller="appController" ng-init="init()">
+    <div  ng-controller="appController">
     {{ helloWorld }}
     </div>
 
@@ -138,3 +138,96 @@ app.controller("appController", function appController($scope){
 ```
 
 *Si vamos a localhost:3000 tenemos nuestra primera web en angular*
+
+*Directivas de angular:*
+* ngApp
+* ng-blur
+* ng-change
+* ng-class
+* ng-click
+* ng-controller
+* ng-hide
+* ng-if
+* ng-init
+* ng-model
+* ng-show
+
+*Ejemplo para el index.html:*
+```
+<div  ng-controller="appController" ng-init="init()">
+        <style>
+            .coloreur {
+                background: red;
+            }
+        </style>
+        <br/>
+
+        <button type="button" ng-click="showText = !showText;">Click Me!</button>
+        <p ng-show="showText">Hidden Text<p/>
+        <p ng-if="showText">Hidden Text<p/>
+        <p ng-hide="showText">Showing Text<p/>
+        <p ng-class="{'coloreur': showText}"> Me just change background<p/>
+
+        <br/>
+        <form name="testForm">
+            <input ng-model="val" type="text" />
+            <input ng-model="val" type="text" />
+            <input ng-model="val" type="text" />
+        </form>
+    </div>
+```
+
+*Solo hay que añadir esto en el controller*
+```
+    $scope.showText = null;
+    $scope.init = function () {
+        $scope.showText = false;
+    };
+```
+
+
+## Fichero angular de producción:
+*Para crear el fichero de produccion de angular vamos a usar grunt. Lo primero incluimos las dependencias:*
+```
+$ npm install --save-dev grunt
+$ npm install --save-dev grunt-contrib-concat
+```
+
+*Lo que hara grunt será concatenar todos los ficheros sueltos de angular para que no tengamos que ir incluyendolos uno a uno*
+*Creamos un fichero en el directorio raiz del proyecto que se llame Gruntfile.js*
+´´´
+$ touch Gruntfile.js
+´´´
+
+*Con el siguiente contenido:*
+```
+module.exports = function(grunt) {
+
+    // Project configuration.
+    grunt.initConfig({
+        concat: {
+            "build": {
+                "src": ["public/js/app.js", "public/js/controllers/*"],
+                "dest": "public/js/build.js"
+            }
+        }
+    });
+
+    // Load required modules
+    grunt.loadNpmTasks('grunt-contrib-concat');
+
+    // Task definitions
+    grunt.registerTask('default', ['concat']);
+};
+```
+
+*Por último añadimos un script en nuestro package.json que ejecute el grunt y despues arranque el servidor:*
+```
+"deploy-pro": "grunt && node app",
+```
+*Si ejecutamos el siguiente comando podremos ver el fichero build.js que seberiamos uncluir en el index.html en producción*
+```
+$ npm run deploy-pro
+```
+
+## Nuestra primera aplicación con angular Reserva de Salas:

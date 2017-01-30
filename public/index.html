@@ -9,10 +9,26 @@
 </head>
 <body ng-app="app">
     <div  ng-controller="appController" ng-init="init()">
-    {{ helloWorld }}
+        <style>
+            .coloreur {
+                background: red;
+            }
+        </style>
+        <br/>
+
+        <button type="button" ng-click="showText = !showText;">Click Me!</button>
+        <p ng-show="showText">Hidden Text<p/>
+        <p ng-if="showText">Hidden Text<p/>
+        <p ng-hide="showText">Showing Text<p/>
+        <p ng-class="{'coloreur': showText}"> Me just change background<p/>
+
+        <br/>
+        <form name="testForm">
+            <input ng-model="val" type="text" />
+            <input ng-model="val" type="text" />
+            <input ng-model="val" type="text" />
+        </form>
     </div>
-
-
     <script src="/js/app.js"></script>
     <script src="/js/controllers/mainController.js"></script>
 </body>
