@@ -1,0 +1,24 @@
+{
+  "name": "tutorial-angular1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "deploy": "node app",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sukisuso/tutorial-angular1.git"
+  },
+  "author": "Jesús Juan Aguilar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sukisuso/tutorial-angular1/issues"
+  },
+  "homepage": "https://github.com/sukisuso/tutorial-angular1#readme",
+  "dependencies": {
+    "connect": "^3.5.0",
+    "serve-static": "^1.11.2"
+  }
+}

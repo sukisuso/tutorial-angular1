@@ -1,0 +1,21 @@
+{
+  "name": "tutorial-angular1",
+  "description": "",
+  "main": "app.js",
+  "authors": [
+    "Jesús Juan Aguilar"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/sukisuso/tutorial-angular1",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.6.1",
+    "bootstrap": "^3.3.7"
+  }
+}
