@@ -1,0 +1,51 @@
+<div class="container">
+    <h1 class="text-center">Salas CRUD</h1>
+    <nav class="navbar navbar-default">
+      <div class="navbar-header">
+        <div class="alert alert-default navbar-brand search-box">
+          <button class="btn btn-primary" ng-click="showForm=!showForm">Nueva sala <span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+        </div>
+        <div class="alert alert-default input-group search-box">
+          <span class="input-group-btn">
+            <input type="text" class="form-control" placeholder="Search sala..." ng-model="search_query">
+          </span>
+        </div>
+      </div>
+    </nav>
+
+
+    <div class="row" ng-show="showForm">
+        <div class="col-md-6 col-md-offset-3" style="margin-bottom:20px;">
+            <form action="r" method="post" accept-charset="utf-8" class="form" role="form">
+                <h4>Datos de la sala.</h4>
+                <input ng-model="salaName" style="border-radius:2px;" type="text" class="form-control input-lg" placeholder="Nombre"  />
+                <input ng-model="salaCap" style="border-radius:2px;" type="number" class="form-control input-lg" placeholder="Capacidad"  />
+                <p ng-show="errorForm" style="color:red;">Rellene todos los datos</p>
+                <button ng-click="addSalaToItems()" style="border-radius:2px; margin-top:3px" class="btn btn-lg btn-primary btn-block signup-btn" type="button">Crear</button>
+            </form>          
+          </div>
+    </div>  
+
+    <div class="row" ng-show="salaItems.length > 0">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <tr>
+            <th>Nombre Sala</th>
+            <th>Capacidad</th>
+            <th></th>
+            <th></th>
+          </tr>
+          <tr ng-repeat="sala in salaItems">
+            <td>{{sala.name}}</td>
+            <td>{{sala.cap}}</td>
+            <td>
+              <button ng-click="editSala(sala, $index)" class="btn btn-warning" title="Edit"><span class="glyphicon glyphicon-edit"></span></button>
+            </td>
+            <td>
+              <button ng-click="deleteSala($index)" class="btn btn-danger" title="Delete"><span class="glyphicon glyphicon-trash"></span></button>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+</div>
