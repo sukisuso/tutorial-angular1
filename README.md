@@ -436,7 +436,7 @@ ng-click="editSala(sala, $index)"
 ```
 ###### salasController.js:
 ```
- if (!$scope.editSalaIndex) {
+ if ($scope.editSalaIndex === undefined || $scope.editSalaIndex === null) {
       $scope.salaItems.push({
         name: $scope.salaName,
         cap: $scope.salaCap,
@@ -482,3 +482,419 @@ $scope.showForm = false;
 ```
 
 ## Server side, Express y MongoDb, persistencia de los datos:
+*Instalar Mongo:*
+```
+https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+```
+*Herramienta para visualizar mongo:*
+```
+https://robomongo.org/download
+```
+
+*Una vez tenemos Mongodb intalado vamos a crear el arbol de directorios para el servidor de node:*
+```
+$ mkdir app/config
+$ mkdir app/bll
+$ mkdir app/bo
+$ mkdir app/models
+$ mkdir app/helpers
+$ touch app/config/config.express.js
+$ touch app/config/config.json
+$ touch app/router.js
+$ touch app/datapool.js 
+```
+
+*Instalamos las dependencias necesarias:*
+```
+$ npm install --save express body-parser co cookie-parser express-session helmet mongoose morgan
+``` 
+
+###### config.json:
+*configuración general del proyecto*
+```
+{
+    "author": "Jesús Juan Aguilar",
+    "database": "mongodb://localhost:27017/tutorialangular",
+    "port": 3000
+}
+```
+
+###### config.express.js:
+```
+var bodyParser    = require('body-parser');
+var helmet        = require('helmet');
+var cookieParser  = require('cookie-parser');
+var morgan        = require('morgan');
+var PUBLIC_URL    = __dirname + '/../../public';
+var session = require('express-session');
+const config = require('./config.json');
+
+exports.build = function (app, express) {
+
+    app.use(express.static(PUBLIC_URL));
+    app.use(morgan(config.environment));
+    app.use(cookieParser());
+    app.use(helmet());
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({ 
+        extended: true
+    }));
+
+
+    app.use(session({
+      secret: '23e23dsadswd23ddnjuiwd82dhqsgdya78dy832hu',
+      resave: true,
+      saveUninitialized: true,
+    }));
+    app.disable('x-powered-by');
+    
+    return app;
+}
+```
+
+###### datapool.js:
+```
+const mongoose = require('mongoose');
+const config = require('./config/config.json');
+mongoose.connect(config.database);
+const ObjectId = mongoose.Types.ObjectId;
+const URL = '/models';
+const URL_REQ = './models/'
+const URL_BO = '/bo';
+const URL_BO_REQ = './bo/'
+const fs = require('fs');
+
+exports.getRepository = function (model) {
+	return mongoose.model(model);
+};
+
+exports.loadRepositories  = function () {
+	var files = fs.readdirSync(__dirname+ URL);
+	files.forEach(file => {
+	  console.log('## DTO -- ' + URL_REQ + file.split('.')[0]);
+	  require(URL_REQ + file.split('.')[0]);
+	});
+};
+
+exports.id = function (id){
+	return ObjectId(id);
+};
+
+exports.loadBussinesOperations = function (app) {
+	var files = fs.readdirSync(__dirname+ URL_BO);
+	files.forEach(file => {
+	  console.log('## BO -- ' + URL_BO_REQ + file.split('.')[0]);
+	  var bo = require(URL_BO_REQ + file.split('.')[0]);
+      bo.startPaths(app);
+	});
+};
+```
+
+###### router.js:
+```
+var datapool = require('./datapool');
+ 
+function route(app) {
+    datapool.loadRepositories();
+    datapool.loadBussinesOperations(app);
+
+    app.get('*', function(req, res){
+        res.redirect('/');
+    });
+}
+
+exports.redirect = route;
+```
+
+###### app.js:
+```
+var express    = require('express');
+var expressCfg = require('./app/config/config.express.js'); 
+var router     = require('./app/router'); 
+var app        = express();
+var config     = require('./app/config/config.json');
+
+expressCfg.build(app, express);
+router.redirect(app);
+
+app.listen(config.port);
+console.log('Listening on 3000');
+```
+
+*Ahora ya tenemos el servidor express montado, puedes ir a localhost:3000 y comprobar que la pagina web se sigue viendo exactamente igual*
+*EL siguiente paso es crear el dto de sala. Primero creamos el fichero en models*
+###### app/models/salaDto.js:
+```
+var mongoose = require('mongoose');    
+
+var Sala = new mongoose.Schema({
+    name: { type: String },
+    size: { type: Number},
+});
+
+mongoose.model('Sala', Sala);
+```
+
+*El siguiente paso es crear la BLL y BO para sala:*
+*La bll al final es la 'query' que ejecutaremos en mongo. Vamos a crear las necesarias para un CRUD:*
+###### app/bll/salaBll.js:
+```
+const datapool = require('./../datapool');
+const salaModel = datapool.getRepository('Sala');
+
+exports.save = save;
+exports.find = find;
+exports.remove = remove;
+exports.update = update;
+
+function save(dto) {
+	var sv = new salaModel(dto);
+	return sv.save();
+}
+
+function find() {
+	  return salaModel.find({}).lean().exec();
+}
+
+function remove (id){
+	return salaModel.findOneAndRemove({ _id: datapool.id(id) });
+}
+
+function update (id, body){
+    return salaModel.findOneAndUpdate({ _id: ObjectId(id) }, body);
+}
+```
+
+*Y el BO al final son las acciones que tenemos que hacer cuando se llame a una ruto:*
+###### app/bo/salaBo.js:
+```
+const co = require('co');
+const handler = require('../helpers/error-express');
+const salaBll = require('../bll/salaBll');
+
+function StartPaths(app){
+
+    app.post('/api/sala', createNewSala);
+    app.get('/api/sala', getAllSala);
+    app.delete('/api/sala', removeSala);
+    app.update('/api/sala', updateSala);
+}
+
+function createNewSala (req, res) {
+  co(function *() {
+      var newContent = yield salaBll.save(req.body.sala);
+      res.send(newContent);
+  }).catch(err =>{handler(res)});
+}
+
+function getAllSala (req, res) {
+  co(function *() {
+      var salas = yield salaBll.find();
+      res.send(salas);
+  }).catch(err =>{handler(res)});
+}
+
+function removeSala (req, res) {
+  co(function *() {
+      var salas = yield salaBll.remove(req.body.id);
+      res.send(salas);
+  }).catch(err =>{handler(res)});
+}
+
+function updateSala (req, res) {
+  co(function *() {
+      var salas = yield salaBll.update(req.body.id, req.body.sala);
+      res.send(salas);
+  }).catch(err =>{handler(res)});
+}
+
+exports.startPaths = StartPaths;
+```
+
+*Como veras en la BO se hace uso de un helper este helper simplemente es una funcion para que los errores se tarten igual:*
+###### app/helper/error-express.js:
+```
+module.exports = exports = function(res, errror) {
+    res.status(500).send({ error: '[Error: Servers Mongo] Fallo recuperando datos. **' + errror});
+};
+```
+
+*Pues ya tenemos nuestro backend con node montado y funcionando :)*
+*Ahora solo queda utilizarlo desde la vista!!!*
+
+## Haciendo uso de nuestro backend desde Angular:
+*Lo primero nos vamos a declarar un servicio desde el que atacaremos nuestras nuevas rutas:*
+*Creamos la carpeta services y salaService.js*
+```
+$ mkdir public/js/services
+$ touch public/js/services/salaService.js
+```
+*No te olvides de incluirlo en el index.html y en el Gruntfile.js*
+```
+<script src="/js/app.js"></script>
+<!-- Services -->
+<script src="/js/services/salaService.js"></script>
+<!-- Controllers -->
+<script src="/js/controllers/mainController.js"></script>
+<script src="/js/controllers/salas/salasController.js"></script>
+
+    *****
+"src": ["public/js/app.js", "public/js/services/*",  "public/js/controllers/*"],
+```
+
+###### salaService.js:
+```
+app.service("salaService",
+  function( $http, $q ) {
+      var URL_SALAS = "/api/sala";
+      return({
+          getSalas: getSalas,
+          createSala: createSala,
+          removeSala: removeSala
+      });
+      
+      function getSalas() {
+          var request = $http({
+              method: "get",
+              url: URL_SALAS,
+          });
+          return( request.then( handleSuccess, handleError ) );
+      }
+
+      function createSala(dto) {
+          var request = $http({
+              method: "post",
+              url: URL_SALAS,
+              data: {
+                sala: dto,
+              }
+          });
+          return( request.then( handleSuccess, handleError ) );
+      }
+
+      function removeSala( id ) {
+          var request = $http({
+              method: "delete",
+              url: URL_SALAS,
+              headers: {'Content-Type': 'application/json'}, 
+              data: {
+                  id: id,
+              }
+          });
+          return( request.then( handleSuccess, handleError ) );
+      }
+      
+      function updateSala( id , dto) {
+          var request = $http({
+              method: "put",
+              url: URL_SALAS,
+              headers: {'Content-Type': 'application/json'}, 
+              data: {
+                  id: id,
+                  sala: dto,
+              }
+          });
+          return( request.then( handleSuccess, handleError ) );
+      }
+
+      function handleError( response ) {
+          if (! angular.isObject( response.data ) ||
+              ! response.data.message
+              ) {
+              return( $q.reject( "An unknown error occurred." ) );
+          }
+          return( $q.reject( response.data.message ) );
+      }
+
+      function handleSuccess( response ) {
+          return( response.data );
+      }
+  }
+);
+```
+
+*Ahora tenemos que añadir el servicio al controlador de salas*
+```
+app.controller("salasController", function appController($scope, salaService){...
+```
+
+*A continuacion añadimos una funcion que se llame con el ng-init para cargar nuestro array de salas:*
+```
+$scope.init = function () {
+    salaService.getSalas()
+     .then (function (data) {
+       $scope.salaItems = data;
+     });
+  }
+```
+
+*Y en el template de salas:*
+```
+<div class="container" ng-init="init()">
+```
+
+*Ahora en addSalaToItems en la parte de añadir nueva sala llamamos a nuestro servicio otra vez: *
+``` 
+ if ($scope.editSalaIndex === undefined || $scope.editSalaIndex === null) {
+    salaService.createSala({
+    name: $scope.salaName,
+    size: $scope.salaCap,
+    })
+    .then(function (data) {
+        $scope.salaItems.push(data);
+    });
+} 
+```
+*Tenemos que cambiar del template de la vista el campo cap ahora se llama size:*
+```
+<tr ng-repeat="sala in salaItems">
+            <td>{{sala.name}}</td>
+            <td>{{sala.size}}</td>
+            <td>
+```
+
+*La funcion deleteSala pasa a ser algo tal que asi:*
+```
+ $scope.deleteSala = function (index) {
+    salaService.removeSala($scope.salaItems[index]._id)
+      .then(function (data) {
+        $scope.salaItems.splice(index, 1);
+      });
+  }
+```
+
+*Por ultimo el edit que es el else del if de crear es algo tal que asi:*
+```
+else {
+      salaService.updateSala($scope.salaEditId, {
+        name: $scope.salaName,
+        size: $scope.salaCap,
+      })
+      .then(function (data) {
+        $scope.salaItems.splice($scope.editSalaIndex, 0, {
+          name: $scope.salaName,
+          size: $scope.salaCap,
+        });
+        $scope.salaName = null; 
+        $scope.salaCap= null;
+      });
+      $scope.editSalaIndex = undefined;
+    }
+
+    $scope.showForm = false;
+    $scope.errorForm = false;
+```
+
+*Por ultimo nos hace falta guardarnos el id de la sala que vamos a editar:*
+```
+  $scope.editSala = function (sala, index) {
+    $scope.salaName = sala.name; 
+    $scope.salaCap= sala.size;
+    $scope.salaEditId = sala._id;
+    $scope.salaItems.splice(index, 1);
+    $scope.showForm = true;
+    $scope.editSalaIndex = index;
+  }
+```
+
+*Vete a localhost que ya funciona todo: :)*
