@@ -19,7 +19,15 @@
   },
   "homepage": "https://github.com/sukisuso/tutorial-angular1#readme",
   "dependencies": {
+    "body-parser": "^1.16.0",
+    "co": "^4.6.0",
     "connect": "^3.5.0",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.14.1",
+    "express-session": "^1.15.0",
+    "helmet": "^3.4.0",
+    "mongoose": "^4.8.1",
+    "morgan": "^1.8.0",
     "serve-static": "^1.11.2"
   },
   "devDependencies": {

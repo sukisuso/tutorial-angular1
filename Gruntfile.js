@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     grunt.initConfig({
         concat: {
             "build": {
-                "src": ["public/js/app.js", "public/js/controllers/*"],
+                "src": ["public/js/app.js", "public/js/services/*",  "public/js/controllers/*"],
                 "dest": "public/js/build.js"
             }
         }

@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" ng-init="init()">
     <h1 class="text-center">Salas CRUD</h1>
     <nav class="navbar navbar-default">
       <div class="navbar-header">
@@ -37,7 +37,7 @@
           </tr>
           <tr ng-repeat="sala in salaItems">
             <td>{{sala.name}}</td>
-            <td>{{sala.cap}}</td>
+            <td>{{sala.size}}</td>
             <td>
               <button ng-click="editSala(sala, $index)" class="btn btn-warning" title="Edit"><span class="glyphicon glyphicon-edit"></span></button>
             </td>
